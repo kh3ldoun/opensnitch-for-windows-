@@ -11,6 +11,7 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/nftables v0.2.0
 	github.com/google/uuid v1.3.0
+	github.com/tailscale/wf v0.0.0
 	github.com/varlink/go v0.4.0
 	github.com/vishvananda/netlink v1.3.0
 	github.com/vishvananda/netns v0.0.4
@@ -29,3 +30,5 @@ require (
 	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
 )
+
+replace github.com/tailscale/wf => ./third_party/wf
