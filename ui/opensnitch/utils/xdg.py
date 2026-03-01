@@ -4,8 +4,19 @@ import re
 import shutil
 import stat
 
+
+def is_windows():
+    return os.name == 'nt'
+
 # https://github.com/takluyver/pyxdg/blob/1d23e483ae869ee9532aca43b133cc43f63626a3/xdg/BaseDirectory.py
 def get_runtime_dir(strict=True):
+    if is_windows():
+        return (
+            os.environ.get('LOCALAPPDATA')
+            or os.environ.get('TEMP')
+            or os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Temp')
+        )
+
     try:
         return os.environ['XDG_RUNTIME_DIR']
     except KeyError:
@@ -32,7 +43,7 @@ def get_runtime_dir(strict=True):
                 os.unlink(fallback)
                 create = True
             # Must be owned by the user and not accessible by anyone else
-            elif (st.st_uid != os.getuid()) \
+            elif (hasattr(os, 'getuid') and st.st_uid != os.getuid()) \
               or (st.st_mode & (stat.S_IRWXG | stat.S_IRWXO)):
                 os.rmdir(fallback)
                 create = True
@@ -56,6 +67,7 @@ def get_run_opensnitch_dir():
 
 class Autostart():
     def __init__(self):
+        self.windows = is_windows()
         desktopFile = 'opensnitch_ui.desktop'
         self.systemDesktop = os.path.join('/usr/share/applications', desktopFile)
         self.systemAutostart = os.path.join('/etc/xdg/autostart', desktopFile)
@@ -71,12 +83,16 @@ class Autostart():
             pass
 
     def createUserDir(self):
+        if self.windows:
+            return
         if not os.path.isdir(xdg_config_home):
             os.makedirs(xdg_config_home, 0o700)
         if not os.path.isdir(os.path.dirname(self.userAutostart)):
             os.makedirs(os.path.dirname(self.userAutostart), 0o755)
 
     def isEnabled(self):
+        if self.windows:
+            return False
         ret = False
         if os.path.isfile(self.userAutostart):
              ret = True
@@ -90,6 +106,8 @@ class Autostart():
         return ret
 
     def enable(self, mode=True):
+        if self.windows:
+            return
         self.createUserDir()
         if mode == True:
             if os.path.isfile(self.systemAutostart) and os.path.isfile(self.userAutostart):
@@ -109,10 +127,14 @@ class Autostart():
 
 
 _home = os.path.expanduser('~')
-xdg_config_home = os.environ.get('XDG_CONFIG_HOME') or os.path.join(_home, '.config')
+xdg_config_home = (
+    os.environ.get('APPDATA')
+    if is_windows()
+    else (os.environ.get('XDG_CONFIG_HOME') or os.path.join(_home, '.config'))
+)
 xdg_runtime_dir = get_runtime_dir(False)
-xdg_current_desktop = os.environ.get('XDG_CURRENT_DESKTOP')
-xdg_current_session = os.environ.get('XDG_SESSION_TYPE')
-xdg_session_desktop = os.environ.get('XDG_SESSION_DESKTOP')
+xdg_current_desktop = os.environ.get('XDG_CURRENT_DESKTOP') or ('windows' if is_windows() else '')
+xdg_current_session = os.environ.get('XDG_SESSION_TYPE') or ('windows' if is_windows() else '')
+xdg_session_desktop = os.environ.get('XDG_SESSION_DESKTOP') or ('windows' if is_windows() else '')
 
 xdg_opensnitch_dir = get_run_opensnitch_dir()
