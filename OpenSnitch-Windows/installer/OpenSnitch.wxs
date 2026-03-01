@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" Name="OpenSnitch-Windows" Language="1033" Version="1.0.0.0" Manufacturer="evilsocket" UpgradeCode="12345678-1234-1234-1234-123456789012">
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+        <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+        <MediaTemplate EmbedCab="yes" />
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLFOLDER" Name="OpenSnitch">
+                    <Component Id="DaemonExecutable" Guid="*">
+                        <File Id="opensnitchd.exe" Source="..\bin\opensnitchd.exe" KeyPath="yes" />
+                        <ServiceInstall Id="ServiceInstaller" Type="ownProcess" Name="OpenSnitch" DisplayName="OpenSnitch Daemon" Description="OpenSnitch application firewall daemon" Start="auto" Account="LocalSystem" ErrorControl="normal" />
+                        <ServiceControl Id="StartService" Start="install" Stop="both" Remove="uninstall" Name="OpenSnitch" Wait="yes" />
+                    </Component>
+                    <Component Id="UIExecutable" Guid="*">
+                        <File Id="opensnitch_ui.exe" Source="..\ui\dist\OpenSnitchUI\OpenSnitchUI.exe" KeyPath="yes" />
+                        <!-- Registry Key for Autostart -->
+                        <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run" Name="OpenSnitchUI" Value="[INSTALLFOLDER]OpenSnitchUI.exe" Type="string" Action="write" />
+                    </Component>
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <Feature Id="ProductFeature" Title="OpenSnitch" Level="1">
+            <ComponentRef Id="DaemonExecutable" />
+            <ComponentRef Id="UIExecutable" />
+        </Feature>
+    </Product>
+</Wix>

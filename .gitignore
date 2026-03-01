@@ -1,3 +1,12 @@
 *.sock
 *.pyc
 *.profile
+
+# OpenSnitch-Windows Build and Temp files
+OpenSnitch-Windows/daemon/opensnitchd.exe
+OpenSnitch-Windows/ui/__pycache__/
+*.pyc
+OpenSnitch-Windows/ui/
+OpenSnitch-Windows/proto/
+OpenSnitch-Windows/daemon/proto/
+OpenSnitch-Windows/daemon/opensnitchd.exe
