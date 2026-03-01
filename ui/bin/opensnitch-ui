@@ -78,7 +78,10 @@ from opensnitch import auth
 import opensnitch.proto as proto
 ui_pb2, ui_pb2_grpc = proto.import_()
 
-app_id = os.path.join(xdg_opensnitch_dir, "io.github.evilsocket.opensnitch")
+if os.name == 'nt':
+    app_id = "io.github.evilsocket.opensnitch"
+else:
+    app_id = os.path.join(xdg_opensnitch_dir, "io.github.evilsocket.opensnitch")
 
 def on_exit():
     server.stop(0)
@@ -91,6 +94,8 @@ def on_exit():
 
 def restrict_socket_perms(socket):
     """Restrict socket reading to the current user"""
+    if os.name == 'nt':
+        return
     try:
         if socket.startswith("unix://") and os.path.exists(socket[7:]):
             os.chmod(socket[7:], 0o640)
@@ -121,7 +126,7 @@ def configure_qt_platform_plugin(cfg):
     os.environ["QT_QPA_PLATFORM"] = qt_plugin
 
 def check_environ():
-    if xdg_current_session == "":
+    if xdg_current_session == "" and os.name != 'nt':
         print("""
 
   Warning: XDG_SESSION_TYPE is not set.
@@ -164,11 +169,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='OpenSnitch UI service.', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--socket", dest="socket", help='''
 Path of the unix socket for the gRPC service (https://github.com/grpc/grpc/blob/master/doc/naming.md).
-Default: unix:///tmp/osui.sock
+Default: unix:///tmp/osui.sock (Linux/macOS), 127.0.0.1:50051 (Windows)
 
 Examples:
     - Listening on Unix socket: opensnitch-ui --socket unix:///tmp/osui.sock
         * Use unix:///run/1000/YOUR_USER/opensnitch/osui.sock for better privacy.
+    - Listening on TCP (Windows compatible): opensnitch-ui --socket 127.0.0.1:50051
     - Listening on port 50051, all interfaces: opensnitch-ui --socket "[::]:50051"
                         ''', metavar="FILE")
     parser.add_argument("--socket-auth", dest="socket_auth", help="Auth type: simple, tls-simple, tls-mutual")
@@ -237,13 +243,13 @@ Examples:
 
         if args.socket is None:
             # default
-            args.socket = "unix:///tmp/osui.sock"
+            args.socket = "127.0.0.1:50051" if os.name == 'nt' else "unix:///tmp/osui.sock"
 
             addr = cfg.getSettings(Config.DEFAULT_SERVER_ADDR)
             if addr is not None and addr != "":
                 if addr.startswith("unix://"):
                     if not os.path.exists(os.path.dirname(addr[7:])):
-                        log.warning("WARNING: unix socket path does not exist, using unix:///tmp/osui.sock, %s", addr)
+                        log.warning("WARNING: unix socket path does not exist, using %s, %s", args.socket, addr)
                     else:
                         args.socket = addr
                 else:

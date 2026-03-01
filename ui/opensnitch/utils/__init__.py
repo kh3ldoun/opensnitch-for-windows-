@@ -6,7 +6,10 @@ from opensnitch.config import Config
 from opensnitch.utils.themes import Themes
 from opensnitch.desktop_parser import LinuxDesktopParser
 from threading import Thread, Event
-import pwd
+try:
+    import pwd
+except Exception:
+    pwd = None
 import socket
 import fcntl
 import struct
@@ -186,7 +189,8 @@ class Utils():
     def get_user_id(uid):
         pw_name = uid
         try:
-            pw_name = pwd.getpwuid(int(uid)).pw_name + " (" + uid + ")"
+            if pwd is not None:
+                pw_name = pwd.getpwuid(int(uid)).pw_name + " (" + uid + ")"
         except Exception:
             #pw_name += " (error)"
             pass
@@ -210,6 +214,9 @@ class Utils():
     def create_socket_dirs():
         """https://www.linuxbase.org/betaspecs/fhs/fhs.html#runRuntimeVariableData
         """
+        if os.name == 'nt' or not hasattr(os, 'getuid'):
+            return
+
         run_path = "/run/user/{0}".format(os.getuid())
         var_run_path = "/var{0}".format(run_path)
 

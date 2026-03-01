@@ -261,16 +261,20 @@ class PreferencesDialog(QtWidgets.QDialog, uic.loadUiType(DIALOG_UI_PATH)[0]):
 
             self.comboNodeAddress.clear()
             self.comboServerAddr.clear()
-            run_path = "/run/user/{0}/opensnitch/".format(os.getuid())
-            var_run_path = f"/var{run_path}"
-            self.comboNodeAddress.addItem("unix:///tmp/osui.sock")
-            self.comboServerAddr.addItem("unix:///tmp/osui.sock")
-            if os.path.exists(run_path):
-                self.comboNodeAddress.addItem(f"unix://{run_path}/osui.sock")
-                self.comboServerAddr.addItem(f"unix://{run_path}/osui.sock")
-            if os.path.exists(var_run_path):
-                self.comboNodeAddress.addItem(f"unix://{var_run_path}/osui.sock")
-                self.comboServerAddr.addItem(f"unix://{var_run_path}/osui.sock")
+            if os.name == 'nt' or not hasattr(os, 'getuid'):
+                self.comboNodeAddress.addItem("127.0.0.1:50051")
+                self.comboServerAddr.addItem("127.0.0.1:50051")
+            else:
+                run_path = "/run/user/{0}/opensnitch/".format(os.getuid())
+                var_run_path = f"/var{run_path}"
+                self.comboNodeAddress.addItem("unix:///tmp/osui.sock")
+                self.comboServerAddr.addItem("unix:///tmp/osui.sock")
+                if os.path.exists(run_path):
+                    self.comboNodeAddress.addItem(f"unix://{run_path}/osui.sock")
+                    self.comboServerAddr.addItem(f"unix://{run_path}/osui.sock")
+                if os.path.exists(var_run_path):
+                    self.comboNodeAddress.addItem(f"unix://{var_run_path}/osui.sock")
+                    self.comboServerAddr.addItem(f"unix://{var_run_path}/osui.sock")
 
             section_nodes.load(self)
             settings.load(self)
